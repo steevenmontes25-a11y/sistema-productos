@@ -1,0 +1,204 @@
+import { useState, useEffect } from 'react'
+import { X, Loader2 } from 'lucide-react'
+import { gruposApi } from '../../services/api'
+
+function Field({ label, required, error, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide">
+        {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
+    </div>
+  )
+}
+
+const inputCls = (err) =>
+  `w-full px-3 py-2.5 md:py-2 text-sm border rounded-lg focus:outline-none focus:ring-2
+   focus:ring-blue-500 focus:border-transparent ${
+     err ? 'border-rose-400 bg-rose-50' : 'border-slate-300'
+   }`
+
+export default function GrupoForm({ grupo, onSaved, onClose }) {
+  const isEdit = !!grupo
+
+  const [form, setForm] = useState({
+    nombre: '', siglas: '', relacion: 'tipo',
+    tipo_consumo: false, tipo_venta: false, tipo_otros: false,
+    observacion: '',
+  })
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (isEdit && grupo) {
+      setForm({
+        nombre:       grupo.nombre || '',
+        siglas:       grupo.siglas || '',
+        relacion:     grupo.relacion || 'tipo',
+        tipo_consumo: !!grupo.tipo_consumo,
+        tipo_venta:   !!grupo.tipo_venta,
+        tipo_otros:   !!grupo.tipo_otros,
+        observacion:  grupo.observacion || '',
+      })
+    }
+  }, [isEdit, grupo])
+
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setSaving(true); setErrors({})
+    try {
+      if (isEdit) await gruposApi.actualizar(grupo.id, form)
+      else        await gruposApi.crear(form)
+      onSaved()
+    } catch (e) {
+      if (e.errors && Object.keys(e.errors).length) {
+        const flat = {}
+        for (const [k, v] of Object.entries(e.errors)) flat[k] = Array.isArray(v) ? v[0] : v
+        setErrors(flat)
+      } else {
+        alert(e.message || 'Error al guardar.')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    /* ── Overlay ─────────────────────────────────────────── */
+    <div className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center md:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* ── Panel ────────────────────────────────────────── */}
+      <div className={[
+        'relative bg-white flex flex-col z-10',
+        // Móvil: bottom sheet
+        'w-full rounded-t-2xl max-h-[90dvh]',
+        // Tablet+: modal centrado
+        'md:rounded-2xl md:w-[90vw] md:max-w-lg md:shadow-2xl',
+      ].join(' ')}>
+
+        {/* ── Header ───────────────────────────────────── */}
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 bg-slate-800
+          rounded-t-2xl shrink-0">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1
+            bg-slate-600 rounded-full md:hidden" />
+          <h2 className="text-white font-bold text-base">
+            {isEdit ? 'Editar Grupo / Familia' : 'Nuevo Grupo / Familia'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* ── Cuerpo scrollable ─────────────────────────── */}
+        <div className="overflow-y-auto flex-1 px-4 md:px-6 py-4">
+          <form id="grupo-form" onSubmit={handleSubmit} className="space-y-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              <Field label="Nombre" required error={errors.nombre}>
+                <input
+                  type="text" name="nombre" value={form.nombre}
+                  onChange={handleChange} placeholder="Ej: ILUMINACION"
+                  className={inputCls(errors.nombre)}
+                />
+              </Field>
+
+              <Field label="Siglas" required error={errors.siglas}>
+                <input
+                  type="text" name="siglas" value={form.siglas}
+                  onChange={e => handleChange({
+                    target: { name: 'siglas', value: e.target.value.toUpperCase() }
+                  })}
+                  placeholder="Ej: ILM" maxLength={10}
+                  className={`${inputCls(errors.siglas)} font-mono uppercase`}
+                />
+              </Field>
+            </div>
+
+            {/* RELACION */}
+            <Field label="Relación" required error={errors.relacion}>
+              <div className="flex flex-col sm:flex-row gap-3 mt-1">
+                {[
+                  { value: 'tipo',              label: 'Tipo' },
+                  { value: 'familia_proveedor', label: 'Familia / Proveedor' },
+                ].map(opt => (
+                  <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="radio" name="relacion" value={opt.value}
+                      checked={form.relacion === opt.value}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-slate-700">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+
+            {/* TIPO checkboxes */}
+            <Field label="Tipo de uso">
+              <div className="flex flex-wrap gap-4 mt-1">
+                {[
+                  { name: 'tipo_consumo', label: 'Para Consumo' },
+                  { name: 'tipo_venta',   label: 'Para Venta'   },
+                  { name: 'tipo_otros',   label: 'Otros'        },
+                ].map(opt => (
+                  <label key={opt.name} className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox" name={opt.name}
+                      checked={form[opt.name]}
+                      onChange={handleChange}
+                      className="w-5 h-5 md:w-4 md:h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-slate-700">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+
+            {/* OBSERVACION */}
+            <Field label="Observación" error={errors.observacion}>
+              <textarea
+                name="observacion" value={form.observacion}
+                onChange={handleChange} rows={3}
+                placeholder="Notas adicionales..."
+                className={`${inputCls(errors.observacion)} resize-none`}
+              />
+            </Field>
+          </form>
+        </div>
+
+        {/* ── Footer fijo ───────────────────────────────── */}
+        <div className="shrink-0 flex gap-3 px-4 md:px-6 py-4 border-t border-slate-100 bg-white rounded-b-2xl">
+          <button
+            type="button" onClick={onClose}
+            className="flex-1 py-2.5 md:py-2 text-sm font-medium
+              bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit" form="grupo-form" disabled={saving}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 md:py-2
+              text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+              text-white rounded-lg transition-colors"
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

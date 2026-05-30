@@ -1,0 +1,193 @@
+import { useState, useEffect } from 'react'
+import { X, Tag, Loader2, CheckCircle2 } from 'lucide-react'
+import { productosApi } from '../../services/api'
+
+export default function EtiquetaModal({ producto, onClose }) {
+  const [cantidad, setCantidad]   = useState(1)
+  const [reimprimir, setReimprimir] = useState(false)
+  const [desde, setDesde]         = useState(0)
+  const [hasta, setHasta]         = useState(0)
+  const [saving, setSaving]       = useState(false)
+  const [resultado, setResultado] = useState(null)
+  const [error, setError]         = useState(null)
+
+  useEffect(() => {
+    const n = parseInt(cantidad) || 0
+    if (reimprimir) {
+      setDesde(Math.max(1, producto.ultima_etiqueta - n + 1))
+      setHasta(producto.ultima_etiqueta)
+    } else {
+      setDesde(producto.ultima_etiqueta + 1)
+      setHasta(producto.ultima_etiqueta + n)
+    }
+  }, [cantidad, reimprimir, producto.ultima_etiqueta])
+
+  async function handleGenerar() {
+    if (!cantidad || parseInt(cantidad) < 1) { setError('Ingrese una cantidad válida.'); return }
+    setSaving(true); setError(null)
+    try {
+      const data = await productosApi.generarEtiquetas(producto.id, {
+        cantidad: parseInt(cantidad), reimprimir,
+      })
+      setResultado(data)
+    } catch (e) {
+      setError(e.message || 'Error al generar etiquetas.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    /* ── Overlay ─────────────────────────────────────────── */
+    <div className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center md:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* ── Panel ────────────────────────────────────────── */}
+      <div className={[
+        'relative bg-white flex flex-col z-10',
+        // Móvil: bottom sheet
+        'w-full rounded-t-2xl max-h-[90dvh]',
+        // Tablet+: modal centrado
+        'md:rounded-2xl md:w-full md:max-w-md md:shadow-2xl',
+      ].join(' ')}>
+
+        {/* ── Header ───────────────────────────────────── */}
+        <div className="flex items-center justify-between px-5 py-4 bg-slate-800
+          rounded-t-2xl shrink-0">
+          {/* Pill handle — móvil */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1
+            bg-slate-600 rounded-full md:hidden" />
+          <div className="flex items-center gap-2">
+            <Tag size={17} className="text-blue-400" />
+            <h2 className="text-white font-bold text-base">Generar Etiquetas</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* ── Cuerpo scrollable ─────────────────────────── */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+
+          {/* Info producto */}
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+            <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1">Producto</p>
+            <p className="font-mono font-bold text-blue-700 text-sm">{producto.codigo}</p>
+            <p className="text-slate-700 text-sm mt-0.5 truncate">{producto.nombre}</p>
+          </div>
+
+          {!resultado ? (
+            <>
+              {/* Última etiqueta */}
+              <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <span className="text-sm font-semibold text-amber-700 uppercase tracking-wide">Última etiqueta</span>
+                <span className="text-2xl font-bold text-amber-800 font-mono">{producto.ultima_etiqueta}</span>
+              </div>
+
+              {/* Cantidad */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide">
+                  # Etiquetas <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number" min="1" max="9999" value={cantidad}
+                  onChange={e => { setCantidad(e.target.value); setError(null) }}
+                  className="w-full px-3 py-3 md:py-2 text-lg font-bold font-mono text-center
+                    border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Reimprimir */}
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox" checked={reimprimir}
+                  onChange={e => setReimprimir(e.target.checked)}
+                  className="w-5 h-5 md:w-4 md:h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-700 font-medium">Re-imprimir (no avanza el secuencial)</span>
+              </label>
+
+              {/* Desde / Hasta */}
+              <div className="grid grid-cols-2 gap-3">
+                {[['Desde', desde], ['Hasta', hasta]].map(([lbl, val]) => (
+                  <div key={lbl} className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">{lbl}</p>
+                    <p className="text-2xl font-bold text-slate-800 font-mono mt-1">{val}</p>
+                  </div>
+                ))}
+              </div>
+
+              {error && (
+                <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
+            </>
+          ) : (
+            /* Resultado exitoso */
+            <div className="space-y-4">
+              <div className="flex flex-col items-center gap-2 py-4">
+                <CheckCircle2 size={40} className="text-emerald-500" />
+                <p className="text-slate-700 font-semibold text-center">Etiquetas generadas correctamente</p>
+                {resultado.reimprimir && (
+                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                    Reimpresión (sin avanzar secuencial)
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[['Desde', resultado.desde, 'emerald'], ['Hasta', resultado.hasta, 'emerald']].map(([lbl, val, c]) => (
+                  <div key={lbl} className={`bg-${c}-50 border border-${c}-200 rounded-xl p-3 text-center`}>
+                    <p className={`text-xs text-${c}-600 uppercase tracking-wide font-semibold`}>{lbl}</p>
+                    <p className={`text-2xl font-bold text-${c}-800 font-mono mt-1`}>{val}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-sm text-slate-500">
+                <span className="font-semibold text-slate-700">{resultado.cantidad}</span>{' '}
+                etiqueta{resultado.cantidad !== 1 ? 's' : ''} — última:{' '}
+                <span className="font-mono font-bold text-slate-700">{resultado.ultima_etiqueta}</span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer fijo ───────────────────────────────── */}
+        <div className="shrink-0 flex gap-3 px-5 py-4 border-t border-slate-100 bg-white rounded-b-2xl">
+          {!resultado ? (
+            <>
+              <button
+                onClick={onClose}
+                className="flex-1 py-2.5 md:py-2 text-sm font-medium
+                  bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGenerar} disabled={saving}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 md:py-2
+                  text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+                  text-white rounded-lg transition-colors"
+              >
+                {saving
+                  ? <><Loader2 size={14} className="animate-spin" />Generando...</>
+                  : <><Tag size={14} />Generar</>}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 md:py-2 text-sm font-medium
+                bg-slate-800 hover:bg-slate-900 text-white rounded-lg transition-colors"
+            >
+              Cerrar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
