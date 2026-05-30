@@ -11,13 +11,15 @@ class GrupoFamilia extends Model
 
     protected $fillable = [
         'nombre', 'siglas', 'relacion',
-        'tipo_consumo', 'tipo_venta', 'tipo_otros', 'observacion',
+        'para_venta', 'para_consumo', 'para_otros',
+        'observacion', 'activo',
     ];
 
     protected $casts = [
-        'tipo_consumo' => 'boolean',
-        'tipo_venta'   => 'boolean',
-        'tipo_otros'   => 'boolean',
+        'para_venta'   => 'boolean',
+        'para_consumo' => 'boolean',
+        'para_otros'   => 'boolean',
+        'activo'       => 'boolean',
     ];
 
     public function productos(): HasMany

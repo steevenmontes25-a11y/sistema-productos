@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
@@ -18,10 +19,10 @@ class Producto extends Model
         'pvp'             => 'float',
         'pvd'             => 'float',
         'descuento'       => 'float',
-        'iva'             => 'float',
+        'iva'             => 'integer',
         'costo'           => 'float',
-        'inv_bodega'      => 'integer',
-        'inv_muestra'     => 'integer',
+        'inv_bodega'      => 'float',
+        'inv_muestra'     => 'float',
         'ultima_etiqueta' => 'integer',
         'activo'          => 'boolean',
     ];
@@ -31,9 +32,14 @@ class Producto extends Model
         return $this->belongsTo(GrupoFamilia::class, 'grupo_id');
     }
 
-    public function getInvTotalAttribute(): int
+    public function detalles(): HasMany
     {
-        return $this->inv_bodega + $this->inv_muestra;
+        return $this->hasMany(DetalleFactura::class, 'producto_id');
+    }
+
+    public function getInvTotalAttribute(): float
+    {
+        return round($this->inv_bodega + $this->inv_muestra, 2);
     }
 
     public function getPvpIvaAttribute(): float

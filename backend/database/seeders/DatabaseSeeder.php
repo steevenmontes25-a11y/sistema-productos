@@ -16,8 +16,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            GrupoFamiliaSeeder::class,
-            ProductoSeeder::class,
+            GrupoFamiliaSeeder::class,   // 1. sin FK
+            TipoClienteSeeder::class,    // 2. sin FK
+            ProductoSeeder::class,       // 3. FK → grupos_familias
+            ClienteSeeder::class,        // 4. FK → tipo_clientes
+            FacturaSeeder::class,        // 5. FK → clientes + productos
         ]);
     }
 }
