@@ -9,16 +9,16 @@ use Illuminate\Http\Request;
 
 class ProductoController extends Controller
 {
-    // ── GET /api/productos ─────────────────────────────────
+    // GET /api/productos?buscar=X&estado=activo|inactivo|todos
     public function index(Request $request): JsonResponse
     {
         $query = Producto::with('grupo');
 
         if ($buscar = $request->query('buscar')) {
             $query->where(function ($q) use ($buscar) {
-                $q->where('codigo',      'ilike', "%{$buscar}%")
-                  ->orWhere('nombre',    'ilike', "%{$buscar}%")
-                  ->orWhere('marca',     'ilike', "%{$buscar}%")
+                $q->where('codigo',       'ilike', "%{$buscar}%")
+                  ->orWhere('nombre',     'ilike', "%{$buscar}%")
+                  ->orWhere('marca',      'ilike', "%{$buscar}%")
                   ->orWhere('descripcion','ilike', "%{$buscar}%");
             });
         }
@@ -29,12 +29,12 @@ class ProductoController extends Controller
             default    => null,
         };
 
-        $productos = $query->orderBy('codigo')->get()->map(fn($p) => $this->formato($p));
-
-        return response()->json($productos);
+        return response()->json(
+            $query->orderBy('codigo')->get()->map(fn($p) => $this->toArray($p))
+        );
     }
 
-    // ── POST /api/productos ────────────────────────────────
+    // POST /api/productos
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -51,23 +51,23 @@ class ProductoController extends Controller
             'ref_importacion' => 'nullable|string|max:100',
         ]);
 
-        $grupo   = GrupoFamilia::findOrFail($validated['grupo_id']);
-        $codigo  = $this->generarCodigo($grupo);
-
-        $producto = Producto::create(array_merge($validated, ['codigo' => $codigo]));
+        $grupo    = GrupoFamilia::findOrFail($validated['grupo_id']);
+        $producto = Producto::create(
+            array_merge($validated, ['codigo' => $this->generarCodigo($grupo)])
+        );
         $producto->load('grupo');
 
-        return response()->json($this->formato($producto), 201);
+        return response()->json($this->toArray($producto), 201);
     }
 
-    // ── GET /api/productos/{id} ────────────────────────────
+    // GET /api/productos/{id}
     public function show($id): JsonResponse
     {
         $producto = Producto::with('grupo')->findOrFail($id);
-        return response()->json($this->formato($producto));
+        return response()->json($this->toArray($producto));
     }
 
-    // ── PUT /api/productos/{id} ────────────────────────────
+    // PUT /api/productos/{id}  — el código nunca cambia al editar
     public function update(Request $request, $id): JsonResponse
     {
         $producto = Producto::findOrFail($id);
@@ -86,14 +86,13 @@ class ProductoController extends Controller
             'ref_importacion' => 'nullable|string|max:100',
         ]);
 
-        // El código nunca cambia al actualizar
         $producto->update($validated);
         $producto->load('grupo');
 
-        return response()->json($this->formato($producto));
+        return response()->json($this->toArray($producto));
     }
 
-    // ── PATCH /api/productos/{id}/estado ──────────────────
+    // PATCH /api/productos/{id}/estado  — NUNCA elimina, solo cambia activo
     public function toggleEstado($id): JsonResponse
     {
         $producto = Producto::findOrFail($id);
@@ -106,7 +105,7 @@ class ProductoController extends Controller
         ]);
     }
 
-    // ── POST /api/productos/{id}/etiquetas ─────────────────
+    // POST /api/productos/{id}/etiquetas
     public function generarEtiquetas(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -139,15 +138,14 @@ class ProductoController extends Controller
         ]);
     }
 
-    // ── GET /api/productos/siguiente-codigo/{grupoId} ─────
+    // GET /api/productos/siguiente-codigo/{grupoId}
     public function siguienteCodigo($grupoId): JsonResponse
     {
-        $grupo  = GrupoFamilia::findOrFail($grupoId);
-        $codigo = $this->generarCodigo($grupo);
-        return response()->json(['codigo' => $codigo]);
+        $grupo = GrupoFamilia::findOrFail($grupoId);
+        return response()->json(['codigo' => $this->generarCodigo($grupo)]);
     }
 
-    // ── Helpers ───────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────
     private function generarCodigo(GrupoFamilia $grupo): string
     {
         $siglas  = strtoupper($grupo->siglas);
@@ -155,14 +153,12 @@ class ProductoController extends Controller
                            ->orderByDesc('id')
                            ->value('codigo');
 
-        $secuencial = $ultimo
-            ? (int) explode('.', $ultimo)[1] + 1
-            : 1;
+        $seq = $ultimo ? (int) explode('.', $ultimo)[1] + 1 : 1;
 
-        return $siglas . '.' . str_pad($secuencial, 6, '0', STR_PAD_LEFT);
+        return $siglas . '.' . str_pad($seq, 6, '0', STR_PAD_LEFT);
     }
 
-    private function formato(Producto $p): array
+    private function toArray(Producto $p): array
     {
         return array_merge($p->toArray(), [
             'inv_total' => round($p->inv_bodega + $p->inv_muestra, 2),
