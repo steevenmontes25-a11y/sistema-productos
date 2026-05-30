@@ -1,6 +1,6 @@
 const BASE = 'http://localhost:8000/api'
 
-// Helper: lanza error con los datos del servidor para manejo uniforme
+// Helper centralizado: lanza error con datos del servidor
 async function req(url, options = {}) {
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
