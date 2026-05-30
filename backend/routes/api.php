@@ -5,8 +5,7 @@ use App\Http\Controllers\ProductoController;
 use Illuminate\Support\Facades\Route;
 
 // ── Módulo Productos (Antony) ─────────────────────────────
-// La ruta estática debe ir ANTES del apiResource para evitar
-// que Laravel confunda "siguiente-codigo" con un {id} de show
+// Rutas estáticas ANTES del apiResource para evitar colisión con {producto}
 Route::get('productos/siguiente-codigo/{grupoId}', [ProductoController::class, 'siguienteCodigo']);
 Route::patch('productos/{id}/estado',              [ProductoController::class, 'toggleEstado']);
 Route::post('productos/{id}/etiquetas',             [ProductoController::class, 'generarEtiquetas']);
