@@ -20,16 +20,14 @@ export default function Layout({ activeModule, onNavigate, children }) {
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* ── Área principal ─────────────────────────────────── */}
+      {/* Área principal */}
       <div className="ml-0 md:ml-16 lg:ml-60 flex flex-col min-h-screen pt-14 lg:pt-0 transition-all duration-300">
 
-        {/* Header fijo — móvil y tablet ────────────────────── */}
-        <header className="fixed top-0 left-0 right-0 md:left-16 lg:hidden
-          h-14 bg-slate-800 shadow flex items-center px-4 gap-3 z-10">
+        {/* Header fijo — móvil y tablet */}
+        <header className="fixed top-0 left-0 right-0 md:left-16 lg:hidden h-14 bg-slate-800 shadow flex items-center px-4 gap-3 z-10">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden w-10 h-10 flex items-center justify-center
-              rounded-lg text-slate-300 hover:text-white hover:bg-slate-700"
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
             aria-label="Abrir menú"
           >
             <Menu size={20} />
@@ -39,7 +37,7 @@ export default function Layout({ activeModule, onNavigate, children }) {
           </span>
         </header>
 
-        {/* Breadcrumb — solo desktop ───────────────────────── */}
+        {/* Breadcrumb — solo desktop */}
         <div className="hidden lg:flex items-center gap-2 bg-white border-b border-slate-200 px-6 py-3">
           {meta.crumbs.map((c, i) => (
             <span key={i} className="flex items-center gap-2">
