@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class GrupoFamiliaController extends Controller
 {
-    // ── GET /api/grupos-familias ───────────────────────────
+    // GET /api/grupos-familias?buscar=X
     public function index(Request $request): JsonResponse
     {
         $query = GrupoFamilia::withCount('productos');
@@ -20,12 +20,10 @@ class GrupoFamiliaController extends Controller
             });
         }
 
-        return response()->json(
-            $query->orderBy('nombre')->get()
-        );
+        return response()->json($query->orderBy('nombre')->get());
     }
 
-    // ── POST /api/grupos-familias ──────────────────────────
+    // POST /api/grupos-familias
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -39,7 +37,6 @@ class GrupoFamiliaController extends Controller
             'activo'       => 'boolean',
         ]);
 
-        // Siglas siempre en mayúsculas
         $validated['siglas'] = strtoupper($validated['siglas']);
 
         $grupo = GrupoFamilia::create($validated);
@@ -48,7 +45,7 @@ class GrupoFamiliaController extends Controller
         return response()->json($grupo, 201);
     }
 
-    // ── PUT /api/grupos-familias/{id} ─────────────────────
+    // PUT /api/grupos-familias/{id}
     public function update(Request $request, $id): JsonResponse
     {
         $grupo = GrupoFamilia::findOrFail($id);
@@ -72,7 +69,7 @@ class GrupoFamiliaController extends Controller
         return response()->json($grupo);
     }
 
-    // ── DELETE /api/grupos-familias/{id} ──────────────────
+    // DELETE /api/grupos-familias/{id}
     public function destroy($id): JsonResponse
     {
         $grupo = GrupoFamilia::withCount('productos')->findOrFail($id);
