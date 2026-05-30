@@ -36,14 +36,4 @@ class Producto extends Model
     {
         return $this->hasMany(DetalleFactura::class, 'producto_id');
     }
-
-    public function getInvTotalAttribute(): float
-    {
-        return round($this->inv_bodega + $this->inv_muestra, 2);
-    }
-
-    public function getPvpIvaAttribute(): float
-    {
-        return round($this->pvp * (1 + $this->iva / 100), 2);
-    }
 }
