@@ -23,57 +23,46 @@ const inp = (err) =>
 export default function ProductoForm({ producto, onSaved, onClose }) {
   const isEdit = !!producto
 
-  const [grupos, setGrupos]           = useState([])
-  const [loadingGrupos, setLG]        = useState(true)
-  const [codigoPreview, setCodigo]    = useState('')
-  const [pvpIva, setPvpIva]           = useState('')
-  const [errors, setErrors]           = useState({})
-  const [saving, setSaving]           = useState(false)
+  const [grupos, setGrupos]        = useState([])
+  const [loadingGrupos, setLG]     = useState(true)
+  const [codigoPreview, setCodigo] = useState(isEdit ? (producto.codigo ?? '') : '')
+  const [errors, setErrors]        = useState({})
+  const [saving, setSaving]        = useState(false)
 
-  const [form, setForm] = useState({
+  // Inicializador de estado — evita useEffect + setState síncrono
+  const [form, setForm] = useState(() => isEdit && producto ? {
+    grupo_id:        String(producto.grupo_id ?? ''),
+    nombre:          producto.nombre          ?? '',
+    unidad:          producto.unidad          ?? 'unidad',
+    pvp:             String(producto.pvp      ?? ''),
+    pvd:             String(producto.pvd      ?? ''),
+    descuento:       String(producto.descuento ?? '0'),
+    iva:             String(producto.iva       ?? '12'),
+    marca:           producto.marca           ?? '',
+    descripcion:     producto.descripcion     ?? '',
+    costo:           String(producto.costo    ?? '0'),
+    ref_importacion: producto.ref_importacion ?? '',
+  } : {
     grupo_id: '', nombre: '', unidad: 'unidad',
     pvp: '', pvd: '', descuento: '0', iva: '12',
     marca: '', descripcion: '', costo: '0', ref_importacion: '',
   })
+
+  // PVP+IVA — valor derivado calculado directamente
+  const pvpIva = ((parseFloat(form.pvp) || 0) * (1 + (parseFloat(form.iva) || 0) / 100)).toFixed(2)
 
   // Carga grupos al montar
   useEffect(() => {
     getGrupos().then(d => { setGrupos(d); setLG(false) }).catch(() => setLG(false))
   }, [])
 
-  // Prefill al editar
-  useEffect(() => {
-    if (!isEdit) return
-    setForm({
-      grupo_id:        String(producto.grupo_id ?? ''),
-      nombre:          producto.nombre ?? '',
-      unidad:          producto.unidad ?? 'unidad',
-      pvp:             String(producto.pvp ?? ''),
-      pvd:             String(producto.pvd ?? ''),
-      descuento:       String(producto.descuento ?? '0'),
-      iva:             String(producto.iva ?? '12'),
-      marca:           producto.marca ?? '',
-      descripcion:     producto.descripcion ?? '',
-      costo:           String(producto.costo ?? '0'),
-      ref_importacion: producto.ref_importacion ?? '',
-    })
-    setCodigo(producto.codigo ?? '')
-  }, [isEdit, producto])
-
-  // Auto-código al cambiar grupo (solo en crear)
+  // Auto-código al cambiar grupo (solo en crear) — async, no viola la regla
   useEffect(() => {
     if (isEdit || !form.grupo_id) return
     getSiguienteCodigo(form.grupo_id)
       .then(d => setCodigo(d.codigo ?? ''))
       .catch(() => setCodigo(''))
   }, [form.grupo_id, isEdit])
-
-  // PVP+IVA en tiempo real
-  useEffect(() => {
-    const pvp = parseFloat(form.pvp) || 0
-    const iva  = parseFloat(form.iva)  || 0
-    setPvpIva((pvp * (1 + iva / 100)).toFixed(2))
-  }, [form.pvp, form.iva])
 
   function handleChange(e) {
     const { name, value } = e.target

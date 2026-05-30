@@ -1,27 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, Tag, Loader2, CheckCircle2 } from 'lucide-react'
 import { generarEtiquetas } from '../../services/api'
 
 export default function EtiquetaModal({ producto, onClose }) {
-  const [cantidad, setCantidad]   = useState(1)
-  const [reimpr, setReimp]        = useState(false)
-  const [desde, setDesde]         = useState(0)
-  const [hasta, setHasta]         = useState(0)
-  const [saving, setSaving]       = useState(false)
-  const [result, setResult]       = useState(null)
-  const [error, setError]         = useState(null)
+  const [cantidad, setCantidad] = useState(1)
+  const [reimpr, setReimp]      = useState(false)
+  const [saving, setSaving]     = useState(false)
+  const [result, setResult]     = useState(null)
+  const [error, setError]       = useState(null)
 
-  // Calcula preview en tiempo real
-  useEffect(() => {
-    const n = parseInt(cantidad) || 0
-    if (reimpr) {
-      setDesde(Math.max(1, producto.ultima_etiqueta - n + 1))
-      setHasta(producto.ultima_etiqueta)
-    } else {
-      setDesde(producto.ultima_etiqueta + 1)
-      setHasta(producto.ultima_etiqueta + n)
-    }
-  }, [cantidad, reimpr, producto.ultima_etiqueta])
+  // Valores derivados — calculados directamente, sin estado propio
+  const n     = parseInt(cantidad) || 0
+  const desde = reimpr ? Math.max(1, producto.ultima_etiqueta - n + 1) : producto.ultima_etiqueta + 1
+  const hasta = reimpr ? producto.ultima_etiqueta : producto.ultima_etiqueta + n
 
   async function handleGenerar() {
     const n = parseInt(cantidad)
