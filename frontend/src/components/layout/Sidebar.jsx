@@ -11,7 +11,7 @@ const NAV = [
     icon: Package,
     children: [
       { id: 'producto-terminado', label: 'Producto Terminado', icon: Box },
-      { id: 'grupo-familia',      label: 'Grupo / Familia',    icon: Tag },
+      { id: 'grupo-familia', label: 'Grupo / Familia', icon: Tag },
     ],
   },
   // ── Módulo Clientes (Darío) — pendiente de merge ──────
@@ -35,7 +35,7 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
       {/* ── Overlay móvil ────────────────────────────────── */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          className={clsx('md:hidden', 'z-20', 'fixed', 'inset-0', 'bg-black/50')}
           onClick={onClose}
         />
       )}
@@ -45,7 +45,7 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
         'fixed top-0 left-0 h-screen flex flex-col z-30 bg-slate-800 shadow-xl',
         'transition-all duration-300 ease-in-out',
         // Móvil: slide-in controlado por prop `open`
-        'w-[280px]',
+        'w-70',
         open ? 'translate-x-0' : '-translate-x-full',
         // Tablet: icon-only colapsado, hover expande
         'md:translate-x-0 md:w-16 md:hover:w-60 md:overflow-hidden group/sb',
@@ -54,9 +54,9 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
       ].join(' ')}>
 
         {/* Logo ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-700 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+        <div className={clsx('flex', 'justify-between', 'items-center', 'px-4', 'py-4', 'border-slate-700', 'border-b', 'shrink-0')}>
+          <div className={clsx('flex', 'items-center', 'gap-3', 'min-w-0')}>
+            <div className={clsx('flex', 'justify-center', 'items-center', 'bg-blue-600', 'rounded-lg', 'w-8', 'h-8', 'shrink-0')}>
               <Layers size={17} className="text-white" />
             </div>
             <div className={[
@@ -66,21 +66,21 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
               'md:group-hover/sb:opacity-100 md:group-hover/sb:max-w-40',
               'lg:opacity-100 lg:max-w-40',
             ].join(' ')}>
-              <p className="text-white font-bold text-sm leading-tight">Sistema Gestión</p>
-              <p className="text-slate-400 text-xs">Equipos de Sonido</p>
+              <p className={clsx('font-bold', 'text-white', 'text-sm', 'leading-tight')}>Sistema Gestión</p>
+              <p className={clsx('text-slate-400', 'text-xs')}>Equipos de Sonido</p>
             </div>
           </div>
           {/* X — solo móvil */}
           <button
             onClick={onClose}
-            className="md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
+            className={clsx('md:hidden', 'hover:bg-slate-700', 'p-1.5', 'rounded-lg', 'text-slate-400', 'hover:text-white')}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Nav ─────────────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
+        <nav className={clsx('flex-1', 'px-2', 'py-3', 'overflow-x-hidden', 'overflow-y-auto')}>
           {NAV.map(item => {
             const Icon = item.icon
             const isOpen = openMenus[item.id]
@@ -89,11 +89,10 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
                 <button
                   onClick={() => toggle(item.id)}
                   title={item.label}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg
-                    text-slate-300 hover:bg-slate-700 hover:text-white transition-colors group/btn"
+                  className={clsx('group/btn', 'flex', 'justify-between', 'items-center', 'hover:bg-slate-700', 'px-3', 'py-2.5', 'rounded-lg', 'w-full', 'text-slate-300', 'hover:text-white', 'transition-colors')}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Icon size={18} className="text-slate-400 group-hover/btn:text-blue-400 shrink-0" />
+                  <div className={clsx('flex', 'items-center', 'gap-3', 'min-w-0')}>
+                    <Icon size={18} className={clsx('text-slate-400', 'group-hover/btn:text-blue-400', 'shrink-0')} />
                     <span className={[
                       'text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-200',
                       'opacity-100 max-w-35',
@@ -160,7 +159,7 @@ export default function Sidebar({ activeModule, onNavigate, open, onClose }) {
           'md:group-hover/sb:opacity-100',
           'lg:opacity-100',
         ].join(' ')}>
-          <p className="text-slate-500 text-xs whitespace-nowrap">Módulo: Antony · v1.0</p>
+          <p className={clsx('text-slate-500', 'text-xs', 'whitespace-nowrap')}>Módulo: Antony · v1.0</p>
         </div>
       </aside>
     </>
